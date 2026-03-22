@@ -26,7 +26,7 @@ export const Header = ({ activeTab, onTabChange }) => {
               <GraduationCap className="h-5 w-5 text-primary-foreground" />
             </div>
             <h1 className="text-xl font-bold text-foreground hidden sm:block">
-              Интеллектуальный ассистент по университету
+              Ассистент абитуриента
             </h1>
             <h1 className="text-xl font-bold text-foreground sm:hidden">
               Универ-ассистент

@@ -5,7 +5,7 @@ import { Trash2, Building, FileText, Brain } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../tooltip"
 import { useChatAPI } from "./use-chat"
 import { ChatMessages } from "./chat-messages"
-import { ChatInputOptimized } from "./chat-input-optimized"
+import { ChatInput } from "./chat-input.jsx"
 
 const storageKeys = {
   university: "university-chat-history",
@@ -210,7 +210,7 @@ export function Chat() {
             <ClearHistoryButton clearHistory={clearHistory} />
             
             <div className="flex-1">
-              <ChatInputOptimized {...inputProps} />
+              <ChatInput {...inputProps} />
             </div>
           </div>
         </div>

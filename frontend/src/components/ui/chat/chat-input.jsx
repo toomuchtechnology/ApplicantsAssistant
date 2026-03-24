@@ -1,7 +1,7 @@
 import React, { useRef, useCallback, memo, useState } from 'react';
 import { Send, Loader2 } from "lucide-react";
 
-export const ChatInputOptimized = memo(({ onSend, isLoading, placeholder }) => {
+export const ChatInput = memo(({ onSend, isLoading, placeholder }) => {
   const inputRef = useRef(null);
   const [hasText, setHasText] = useState(false);
   const [isMultiline, setIsMultiline] = useState(false);
@@ -104,4 +104,4 @@ export const ChatInputOptimized = memo(({ onSend, isLoading, placeholder }) => {
   );
 });
 
-ChatInputOptimized.displayName = 'ChatInputOptimized';
+ChatInput.displayName = 'ChatInput';

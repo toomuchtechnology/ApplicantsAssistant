@@ -9,11 +9,8 @@ export const Header = ({ activeTab, onTabChange }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navigationItems = [
-    { id: "schedule", label: "Расписание", icon: BookOpen },
-    { id: "files", label: "Файлы", icon: GraduationCap },
     { id: "info", label: "О проекте", icon: Info },
-    { id: "chat", label: "RAG-чат", icon: MessageSquare },
-    { id: "test", label: "Тестирование", icon: FileQuestion },
+    { id: "chat", label: "RAG-чат", icon: MessageSquare }
   ];
 
   return (
@@ -29,7 +26,7 @@ export const Header = ({ activeTab, onTabChange }) => {
               Ассистент абитуриента
             </h1>
             <h1 className="text-xl font-bold text-foreground sm:hidden">
-              Универ-ассистент
+              Aссистент
             </h1>
           </div>
 

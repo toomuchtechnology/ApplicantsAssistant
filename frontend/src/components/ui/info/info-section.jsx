@@ -32,9 +32,9 @@ export const InfoSection = () => {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Заголовок */}
         <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold">Интеллектуальный ассистент по универиситету</h1>
+          <h1 className="text-3xl font-bold">Интеллектуальный ассистент для абитуриента</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Платформа с ИИ-агентами для управления учебным процессом
+            Платформа для предоставления абитуриентам актуальной информации с сайтов белорусских высших учебных заведений.
           </p>
         </div>
 

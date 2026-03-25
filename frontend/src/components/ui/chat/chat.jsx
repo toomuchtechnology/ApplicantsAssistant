@@ -41,7 +41,6 @@ const getPlaceholder = (mode) => {
   }
 }
 
-// Мемоизированные компоненты для табов
 const TabItems = memo(({ mode, setMode }) => (
   <TabsList className="grid grid-cols-2 w-full">
     <TabsTrigger value="university" className="gap-2">
@@ -86,7 +85,6 @@ export function Chat() {
   
   const { sendMessage } = useChatAPI();
   
-  // Загрузка истории
   useEffect(() => {
     const saved = localStorage.getItem(storageKeys[mode])
     if (saved) {
@@ -127,7 +125,6 @@ export function Chat() {
       mode
     };
     
-    // Оптимизация: не создаем новый массив каждый раз
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setIsLoading(true);
@@ -164,7 +161,6 @@ export function Chat() {
     }
   }, [messages, mode, isLoading, sendMessage, saveHistory])
   
-  // Мемоизируем пропсы
   const messagesProps = useMemo(() => ({ messages, isLoading }), [messages, isLoading])
   const inputProps = useMemo(() => ({
     onSend: handleSendMessage,
@@ -175,7 +171,6 @@ export function Chat() {
   return (
     <div className="w-full h-full">
       <div className="h-[calc(100vh-80px)] flex flex-col bg-background">
-        {/* Фиксированная шапка с табами */}
         <div className="border-b px-6 py-3 bg-background">
           <Tabs 
             value={mode} 
@@ -186,10 +181,8 @@ export function Chat() {
           </Tabs>
         </div>
         
-        {/* Сообщения */}
         <ChatMessages {...messagesProps} />
         
-        {/* Панель ввода */}
         <div className="border-t w-full pt-2 bg-background">
           <div className="flex w-full items-center gap-2 max-w-4xl mx-auto">
             <ClearHistoryButton clearHistory={clearHistory} />

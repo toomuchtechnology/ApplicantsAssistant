@@ -1,5 +1,3 @@
-// components/info/info-section.jsx
-import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../card";
 import { Cpu, Network, Brain, Zap } from "lucide-react";
 
@@ -30,7 +28,6 @@ export const InfoSection = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Заголовок */}
         <div className="text-center space-y-4">
           <h1 className="text-3xl font-bold">Интеллектуальный ассистент для абитуриента</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -38,7 +35,6 @@ export const InfoSection = () => {
           </p>
         </div>
 
-        {/* Особенности */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {features.map((feature, index) => {
             const Icon = feature.icon;
@@ -60,7 +56,6 @@ export const InfoSection = () => {
           })}
         </div>
 
-        {/* Технологии */}
         <Card>
           <CardHeader>
             <CardTitle>Технологии</CardTitle>

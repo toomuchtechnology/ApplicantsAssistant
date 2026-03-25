@@ -1,4 +1,3 @@
-// components/theme-toggle.jsx
 import { Moon, Sun } from "lucide-react"
 import { useTheme } from "../providers/theme-provider"
 import { Button } from "./button"

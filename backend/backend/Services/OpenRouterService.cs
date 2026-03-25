@@ -47,7 +47,7 @@ public class OpenRouterService : IOpenRouterService
                 },
                 reasoning = new
                 {
-                    enabled = true
+                    enabled = false
                 }
             };
 

@@ -1,40 +1,29 @@
-// components/markdown/fixed-markdown-content.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { 
   vscDarkPlus, 
-  vs,
-  materialLight,
-  materialOceanic
+  vs
 } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-// Импортируем useTheme из вашего контекста
 import { useTheme } from '../providers/theme-provider';
 
-/**
- * Преобразует блоки кода с языком text в обычный текст
- */
 const fixTextCodeBlocks = (content) => {
   if (!content) return content;
   if (typeof content !== 'string') {
-  content = JSON.stringify(content, null, 2);
+    content = JSON.stringify(content, null, 2);
   }
   let fixed = content.replace(/(?<!`)`([^`\n]+)`(?!`)/g, '**$1**');
   return fixed;
 };
 
-/**
- * Красивый и универсальный компонент для отображения Markdown-ответов от LLM
- * Поддерживает все основные элементы Markdown с современными стилями
- */
 export const SimpleMarkdownContent = ({ 
   content,
   className = '',
   compact = false,
-  theme: themeProp = 'auto' // 'auto', 'light', 'dark'
+  theme: themeProp = 'auto'
 }) => {
   const { theme: contextTheme } = useTheme?.() || { theme: undefined };
   const [mounted, setMounted] = useState(false);
@@ -46,14 +35,11 @@ export const SimpleMarkdownContent = ({
 
   if (!content) return null;
 
-  // Обработка контента - исправляем блоки кода text
   const processedContent = useMemo(() => {
     return fixTextCodeBlocks(content);
   }, [content]);
 
-  // Определяем текущую тему
   const currentTheme = useMemo(() => {
-    // Приоритет: проп > контекст > автоопределение
     if (themeProp !== 'auto') return themeProp;
     if (contextTheme) return contextTheme;
     
@@ -65,12 +51,10 @@ export const SimpleMarkdownContent = ({
 
   const isDarkMode = currentTheme === 'dark';
 
-  // Выбираем стиль для подсветки кода
   const codeStyle = useMemo(() => {
     return isDarkMode ? vscDarkPlus : vs;
   }, [isDarkMode]);
 
-  // Функция для копирования кода
   const copyToClipboard = async (text, language) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -84,7 +68,6 @@ export const SimpleMarkdownContent = ({
     }
   };
 
-  // Конфигурация стилей в зависимости от compact режима
   const styles = compact ? {
     h1: "text-xl font-bold mt-6 mb-4 text-gray-900 dark:text-white",
     h2: "text-lg font-semibold mt-5 mb-3 text-gray-800 dark:text-gray-200",
@@ -100,16 +83,14 @@ export const SimpleMarkdownContent = ({
     h4: "text-base font-medium mt-5 mb-2 text-gray-600 dark:text-gray-400",
     p: "mb-4 text-[15px] leading-relaxed text-gray-700 dark:text-gray-300",
     spacing: "space-y-2",
-    blockquote: "my-5 pl-4 border-l-4 border-gradient-to-b from-blue-400 to-purple-500 bg-gradient-to-r from-blue-50/30 to-purple-50/30 dark:from-gray-800/30 dark:to-gray-900/30 py-3 rounded-r-lg italic text-gray-600 dark:text-gray-400"
+    blockquote: "my-5 pl-4 border-l-4 bg-gradient-to-r from-blue-50/30 to-purple-50/30 dark:from-gray-800/30 dark:to-gray-900/30 py-3 rounded-r-lg italic text-gray-600 dark:text-gray-400"
   };
 
-  // Функция для определения языка программирования
   const getLanguage = (className = '') => {
     const match = className.match(/language-(\w+)/);
     return match ? match[1] : 'text';
   };
 
-  // Функция для получения отображаемого имени языка
   const getLanguageDisplayName = (language) => {
     const languageMap = {
       'js': 'JavaScript',
@@ -155,7 +136,6 @@ export const SimpleMarkdownContent = ({
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={{
-          // Заголовки
           h1: ({ children }) => (
             <h1 className={styles.h1}>{children}</h1>
           ),
@@ -179,7 +159,6 @@ export const SimpleMarkdownContent = ({
             </h6>
           ),
 
-          // Текстовые элементы
           p: ({ children }) => (
             <p className={styles.p}>{children}</p>
           ),
@@ -199,7 +178,6 @@ export const SimpleMarkdownContent = ({
             </del>
           ),
 
-          // Списки
           ul: ({ children }) => (
             <ul className={`mb-4 ml-4 ${styles.spacing}`}>
               {children}
@@ -210,15 +188,15 @@ export const SimpleMarkdownContent = ({
               {children}
             </ol>
           ),
-          li: ({ children }) => (
-            <li className="text-sm text-gray-700 dark:text-gray-300 pl-1 relative before:absolute before:left-0 before:top-2 before:w-1.5 before:h-1.5 before:bg-blue-400 before:rounded-full before:opacity-70">
-              <span className="pl-3">{children}</span>
-            </li>
-          ),
+          li: ({ children, ...props }) => {
+            return (
+              <li className="text-sm text-gray-700 dark:text-gray-300 pl-1">
+                <span className="pl-3">{children}</span>
+              </li>
+            );
+          },
 
-          // Код с подсветкой синтаксиса
           code: ({ node, inline, className, children, ...props }) => {
-            // Для инлайн-кода используем простую обертку
             if (inline) {
               return (
                 <code 
@@ -234,7 +212,6 @@ export const SimpleMarkdownContent = ({
             const displayName = getLanguageDisplayName(language);
             const codeString = String(children).replace(/\n$/, '');
 
-            // Блоки кода с языком, отличным от text
             return mounted ? (
               <div className="my-5 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
                 <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
@@ -281,7 +258,6 @@ export const SimpleMarkdownContent = ({
                 </SyntaxHighlighter>
               </div>
             ) : (
-              // Fallback пока не загрузился SyntaxHighlighter
               <div className="my-5 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
                 <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
                   <span className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
@@ -298,19 +274,16 @@ export const SimpleMarkdownContent = ({
             );
           },
 
-          // Цитаты
           blockquote: ({ children }) => (
             <blockquote className={styles.blockquote}>
               {children}
             </blockquote>
           ),
 
-          // Разделители
           hr: () => (
             <hr className="my-6 border-t border-gray-300 dark:border-gray-700 opacity-50" />
           ),
 
-          // Ссылки
           a: ({ href, children }) => (
             <a 
               href={href} 
@@ -322,7 +295,6 @@ export const SimpleMarkdownContent = ({
             </a>
           ),
 
-          // Изображения
           img: ({ src, alt }) => (
             <div className="my-6 flex justify-center">
               <div className="relative group">
@@ -341,7 +313,6 @@ export const SimpleMarkdownContent = ({
             </div>
           ),
 
-          // Таблицы (через remark-gfm)
           table: ({ children }) => (
             <div className="my-6 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -375,7 +346,6 @@ export const SimpleMarkdownContent = ({
             </td>
           ),
 
-          // Списки задач (через remark-gfm)
           input: ({ checked, type }) => {
             if (type === 'checkbox') {
               return (
@@ -419,176 +389,3 @@ export const SimpleMarkdownContent = ({
     </div>
   );
 };
-
-/**
- * Компактная версия для использования в карточках и ограниченном пространстве
- */
-export const CompactMarkdownContent = ({ content, className = '' }) => {
-  return <SimpleMarkdownContent content={content} className={className} compact={true} />;
-};
-
-/**
- * Декоративная версия с акцентом на визуальную привлекательность
- */
-export const DecorativeMarkdownContent = ({ content, className = '', theme: themeProp = 'auto' }) => {
-  const { theme: contextTheme } = useTheme?.() || { theme: undefined };
-  const [mounted, setMounted] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    
-    // Определяем тему
-    const currentTheme = themeProp !== 'auto' ? themeProp : (contextTheme || 'light');
-    setIsDarkMode(currentTheme === 'dark');
-  }, [themeProp, contextTheme]);
-
-  if (!content) return null;
-
-  // Обработка контента аналогично SimpleMarkdownContent
-  const processedContent = useMemo(() => {
-    return fixTextCodeBlocks(content);
-  }, [content]);
-
-  const codeStyle = isDarkMode ? materialOceanic : materialLight;
-
-  return (
-    <div className={`relative ${className}`}>
-      <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full"></div>
-      
-      <div className="ml-4">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          rehypePlugins={[rehypeRaw]}
-          components={{
-            h1: ({ children }) => (
-              <h1 className="text-2xl font-bold mt-6 mb-4 text-gray-900 dark:text-white bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                {children}
-              </h1>
-            ),
-            h2: ({ children }) => (
-              <h2 className="text-xl font-semibold mt-5 mb-3 text-gray-800 dark:text-gray-200">
-                <span className="relative inline-block">
-                  {children}
-                  <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400"></span>
-                </span>
-              </h2>
-            ),
-            h3: ({ children }) => (
-              <h3 className="text-lg font-medium mt-4 mb-2 text-gray-700 dark:text-gray-300">
-                {children}
-              </h3>
-            ),
-            p: ({ children }) => (
-              <p className="mb-3 text-[15px] leading-relaxed text-gray-700 dark:text-gray-300">
-                {children}
-              </p>
-            ),
-            code: ({ node, inline, className, children, ...props }) => {
-              if (inline) {
-                return (
-                  <code 
-                    className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 px-1.5 py-0.5 rounded text-xs font-mono text-gray-800 dark:text-gray-200 border border-blue-100 dark:border-blue-800/50"
-                    {...props}
-                  >
-                    {children}
-                  </code>
-                );
-              }
-
-              const match = /language-(\w+)/.exec(className || '');
-              const language = match ? match[1] : 'text';
-              const codeString = String(children).replace(/\n$/, '');
-
-              return mounted ? (
-                <div className="my-5 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 shadow-lg">
-                  <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-300 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"></span>
-                      {language}
-                    </span>
-                    <button 
-                      className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors flex items-center gap-1"
-                      onClick={() => navigator.clipboard.writeText(codeString)}
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Копировать
-                    </button>
-                  </div>
-                  <SyntaxHighlighter
-                    language={language}
-                    style={codeStyle}
-                    customStyle={{
-                      margin: 0,
-                      padding: '1rem',
-                      fontSize: '0.875rem',
-                      backgroundColor: isDarkMode ? '#1a202c' : '#f8fafc'
-                    }}
-                    showLineNumbers={true}
-                    lineNumberStyle={{
-                      minWidth: '3em',
-                      paddingRight: '1em',
-                      textAlign: 'right',
-                      color: isDarkMode ? '#718096' : '#94a3b8',
-                      borderRight: '1px solid',
-                      borderRightColor: isDarkMode ? '#2d3748' : '#e2e8f0'
-                    }}
-                    wrapLines={true}
-                    {...props}
-                  >
-                    {codeString}
-                  </SyntaxHighlighter>
-                </div>
-              ) : null;
-            },
-            ul: ({ children }) => (
-              <ul className="mb-4 ml-4 space-y-2">
-                {children}
-              </ul>
-            ),
-            li: ({ children }) => (
-              <li className="text-sm text-gray-700 dark:text-gray-300 pl-2 flex items-start">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-gradient-to-r from-blue-400 to-purple-400 mt-2 mr-2 flex-shrink-0"></span>
-                <span>{children}</span>
-              </li>
-            ),
-            blockquote: ({ children }) => (
-              <blockquote className="my-4 pl-4 border-l-4 border-gradient-to-b from-blue-400 to-purple-500 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-gray-800/50 dark:to-gray-900/50 py-3 rounded-r-lg italic text-gray-600 dark:text-gray-400 relative">
-                <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 text-4xl text-blue-300/30 dark:text-blue-600/20">"</div>
-                <div className="pl-4">{children}</div>
-              </blockquote>
-            ),
-          }}
-        >
-          {processedContent}
-        </ReactMarkdown>
-      </div>
-    </div>
-  );
-};
-
-/**
- * Базовый Markdown компонент с минимальными стилями
- */
-export const BasicMarkdownContent = ({ content, className = '' }) => {
-  // Обработка контента для исправления блоков кода
-  const processedContent = useMemo(() => {
-    return fixTextCodeBlocks(content);
-  }, [content]);
-
-  return (
-    <div className={`prose prose-sm max-w-none dark:prose-invert ${className}`}>
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
-      >
-        {processedContent}
-      </ReactMarkdown>
-    </div>
-  );
-};
-
-// Экспортируем все компоненты
-export default SimpleMarkdownContent;

@@ -9,7 +9,6 @@ import { ChatInput } from "./chat-input.jsx"
 
 const storageKeys = {
   university: "university-chat-history",
-  files: "files-chat-history", 
   llm: "llm-chat-history"
 }
 
@@ -21,15 +20,6 @@ const initialMessages = {
       role: "assistant",
       timestamp: Date.now(),
       mode: "university"
-    }
-  ],
-  files: [
-    {
-      id: "2",
-      content: "Загрузите файлы через меню, и я помогу вам с их анализом.",
-      role: "assistant",
-      timestamp: Date.now(),
-      mode: "files"
     }
   ],
   llm: [
@@ -45,8 +35,7 @@ const initialMessages = {
 
 const getPlaceholder = (mode) => {
   switch (mode) {
-    case "university": return "Задайте вопрос об университете..."
-    case "files": return "Задайте вопрос по загруженным файлам..."
+    case "university": return "Задайте вопрос о вступительной кампании..."
     case "llm": return "Задайте любой вопрос..."
     default: return "Введите сообщение..."
   }
@@ -54,14 +43,10 @@ const getPlaceholder = (mode) => {
 
 // Мемоизированные компоненты для табов
 const TabItems = memo(({ mode, setMode }) => (
-  <TabsList className="grid grid-cols-3 w-full">
+  <TabsList className="grid grid-cols-2 w-full">
     <TabsTrigger value="university" className="gap-2">
       <Building className="h-4 w-4" />
-      Университет
-    </TabsTrigger>
-    <TabsTrigger value="files" className="gap-2">
-      <FileText className="h-4 w-4" />
-      Знания пользователя
+      RAG
     </TabsTrigger>
     <TabsTrigger value="llm" className="gap-2">
       <Brain className="h-4 w-4" />

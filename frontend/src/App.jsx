@@ -1,7 +1,7 @@
-// App.jsx
 import { Header } from "./components/ui/header"
 import { InfoSection } from './components/ui/info'
 import { Chat } from './components/ui/chat/chat'
+import { ProfilePage } from './components/ui/profile/profile'
 import { useState } from "react"
 
 function App() {
@@ -13,6 +13,8 @@ function App() {
         return <InfoSection />;
       case "chat":
         return <Chat />;
+      case "profile":
+        return <ProfilePage/>
       default:
         return <Chat />;
     }

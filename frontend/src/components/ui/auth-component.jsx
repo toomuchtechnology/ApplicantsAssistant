@@ -10,7 +10,6 @@ import {
 import {GoogleLogin} from "@react-oauth/google"
 import {Avatar, AvatarFallback, AvatarImage} from "./avatar"
 import {LogOut, User, Settings} from "lucide-react"
-import {SettingsDialog} from "./settings-dialog"
 
 const API_BASE_URL = import.meta.env.VITE_APP_API_URL || "http://localhost:8081"
 
@@ -146,21 +145,8 @@ export function AuthComponent() {
     const [user, setUser] = useState(null)
     const [profile, setProfile] = useState(null)
     const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false)
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-
-    useEffect(() => {
-        const handleOpenSettings = () => {
-            setIsSettingsOpen(true)
-        }
-
-        window.addEventListener('open-settings', handleOpenSettings)
-
-        return () => {
-            window.removeEventListener('open-settings', handleOpenSettings)
-        }
-    }, [])
 
     // Enhanced authenticate function
     const authenticateWithBackend = async (idToken) => {
@@ -346,15 +332,6 @@ export function AuthComponent() {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator/>
-                        <DropdownMenuItem>
-                            <User className="mr-2 h-4 w-4"/>
-                            <span>Профиль</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
-                            <Settings className="mr-2 h-4 w-4"/>
-                            <span>Настройки</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator/>
                         <DropdownMenuItem onClick={handleComponentLogout}>
                             <LogOut className="mr-2 h-4 w-4"/>
                             <span>Выйти</span>
@@ -408,12 +385,6 @@ export function AuthComponent() {
                         </DialogContent>
                     </Dialog>
                 </>)}
-            <SettingsDialog
-                open={isSettingsOpen}
-                onOpenChange={setIsSettingsOpen}
-                user={user}
-                onUserUpdate={handleUserUpdate}
-            />
         </div>)
 }
 

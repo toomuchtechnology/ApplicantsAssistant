@@ -36,23 +36,14 @@ namespace backend
             });
 
             builder.Services.AddSingleton<IKeyVaultService, EnvironmentKeyVaultService>();
-            builder.Services.AddTransient<IRagInitializationService, RagInitializationService>();
 
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
-            builder.Services.AddScoped<ITaskService, TaskService>();
             builder.Services.AddScoped<IKeyVaultService, EnvironmentKeyVaultService>();
-            builder.Services.AddScoped<IScheduleAnalysisRepository, ScheduleAnalysisRepository>();
-            builder.Services.AddScoped<IScheduleAnalysisService, ScheduleAnalysisService>();
-            builder.Services.AddScoped<IBsuirbotService, BsuirBotService>();
-            builder.Services.AddHttpClient<IOpenRouterService, OpenRouterService>();
 
             var serviceProvider = builder.Services.BuildServiceProvider();
-            var ragService = serviceProvider.GetRequiredService<IRagInitializationService>();
-
-            Task.Run(() => { ragService.InitializeRag(); });
-
+            
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {

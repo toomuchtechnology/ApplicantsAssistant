@@ -1,34 +1,39 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Button } from '../button';
-import { Avatar, AvatarFallback, AvatarImage } from '../avatar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../card';
-import { Alert, AlertDescription } from '../alert';
-import { 
-  User, 
-  Mail, 
-  Calendar, 
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "../button";
+import { Avatar, AvatarFallback, AvatarImage } from "../avatar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../card";
+import { Alert, AlertDescription } from "../alert";
+import {
+  User,
+  Mail,
+  Calendar,
   Globe,
   AlertCircle,
-  Loader2
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+  Loader2,
+} from "lucide-react";
 
-const API_BASE_URL = import.meta.env.VITE_APP_API_URL || "http://localhost:8081";
+const API_BASE_URL =
+  import.meta.env.VITE_APP_API_URL || "http://localhost:8081";
 
 const userAPI = {
   async getCurrentUser() {
     const token = localStorage.getItem("jwt_token");
-    
+
     if (!token) {
       throw new Error("Authentication required. Please login.");
     }
 
     const response = await fetch(`${API_BASE_URL}/api/users/me`, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       },
     });
 
@@ -37,22 +42,24 @@ const userAPI = {
         throw new Error("Session expired. Please login again.");
       }
       const error = await response.json();
-      throw new Error(error.message || 'Failed to fetch user data');
+      throw new Error(error.message || "Failed to fetch user data");
     }
 
     return response.json();
-  }
+  },
 };
 
 const getInitials = (firstName, lastName) => {
-  if (!firstName && !lastName) return 'U';
-  return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  if (!firstName && !lastName) return "U";
+  return `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase();
 };
 
-const formatDate = (dateString, locale = 'ru') => {
+const formatDate = (dateString, locale = "ru") => {
   try {
     const date = new Date(dateString);
-    return format(date, 'dd MMMM yyyy', { locale: locale === 'ru' ? ru : undefined });
+    return format(date, "dd MMMM yyyy", {
+      locale: locale === "ru" ? ru : undefined,
+    });
   } catch {
     return dateString;
   }
@@ -64,9 +71,11 @@ const InfoCard = ({ label, value, icon: Icon }) => (
       <Icon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
     </div>
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
+      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+        {label}
+      </p>
       <p className="text-base font-medium text-gray-900 dark:text-gray-100 break-all">
-        {value || '—'}
+        {value || "—"}
       </p>
     </div>
   </div>
@@ -76,10 +85,10 @@ export function ProfilePage() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    fullName: '',
-    locale: 'ru',
+    firstName: "",
+    lastName: "",
+    fullName: "",
+    locale: "ru",
   });
   const [error, setError] = useState(null);
 
@@ -90,14 +99,14 @@ export function ProfilePage() {
       const data = await userAPI.getCurrentUser();
       setUser(data);
       setFormData({
-        firstName: data.firstName || '',
-        lastName: data.lastName || '',
-        fullName: data.fullName || '',
-        locale: data.locale || 'ru',
+        firstName: data.firstName || "",
+        lastName: data.lastName || "",
+        fullName: data.fullName || "",
+        locale: data.locale || "ru",
       });
     } catch (err) {
       setError(err.message);
-      console.error('Error loading user:', err);
+      console.error("Error loading user:", err);
     } finally {
       setIsLoading(false);
     }
@@ -125,11 +134,7 @@ export function ProfilePage() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {error}
-            <Button 
-              variant="outline" 
-              className="mt-2" 
-              onClick={loadUserData}
-            >
+            <Button variant="outline" className="mt-2" onClick={loadUserData}>
               Попробовать снова
             </Button>
           </AlertDescription>
@@ -148,8 +153,12 @@ export function ProfilePage() {
   return (
     <div className="container max-w-4xl mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Профиль пользователя</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">Управление личной информацией</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Профиль пользователя
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
+          Управление личной информацией
+        </p>
       </div>
 
       {error && (
@@ -165,13 +174,20 @@ export function ProfilePage() {
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <Avatar className="h-32 w-32 mb-4">
-                  {avatarUrl && <AvatarImage src={avatarUrl} alt={user.fullName || 'User avatar'} />}
+                  {avatarUrl && (
+                    <AvatarImage
+                      src={avatarUrl}
+                      alt={user.fullName || "User avatar"}
+                    />
+                  )}
                   <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-500 to-purple-500 text-white">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                  {user.fullName || `${user.firstName} ${user.lastName}` || 'Пользователь'}
+                  {user.fullName ||
+                    `${user.firstName} ${user.lastName}` ||
+                    "Пользователь"}
                 </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   ID: {user.id}
@@ -187,45 +203,47 @@ export function ProfilePage() {
               <div>
                 <CardTitle>Личная информация</CardTitle>
                 <CardDescription>
-                  {'Основные данные пользователя'}
+                  {"Основные данные пользователя"}
                 </CardDescription>
               </div>
             </CardHeader>
             <CardContent>
-              {(
+              {
                 <div className="space-y-2">
-                  <InfoCard 
-                    label="Email" 
-                    value={user.email} 
-                    icon={Mail} 
+                  <InfoCard label="Email" value={user.email} icon={Mail} />
+                  <InfoCard
+                    label="Имя"
+                    value={user.firstName || "Не указано"}
+                    icon={User}
                   />
-                  <InfoCard 
-                    label="Имя" 
-                    value={user.firstName || 'Не указано'} 
-                    icon={User} 
+                  <InfoCard
+                    label="Фамилия"
+                    value={user.lastName || "Не указано"}
+                    icon={User}
                   />
-                  <InfoCard 
-                    label="Фамилия" 
-                    value={user.lastName || 'Не указано'} 
-                    icon={User} 
+                  <InfoCard
+                    label="Полное имя"
+                    value={user.fullName || "Не указано"}
+                    icon={User}
                   />
-                  <InfoCard 
-                    label="Полное имя" 
-                    value={user.fullName || 'Не указано'} 
-                    icon={User} 
+                  <InfoCard
+                    label="Язык"
+                    value={
+                      user.locale === "ru"
+                        ? "Русский"
+                        : user.locale === "en"
+                          ? "English"
+                          : user.locale
+                    }
+                    icon={Globe}
                   />
-                  <InfoCard 
-                    label="Язык" 
-                    value={user.locale === 'ru' ? 'Русский' : user.locale === 'en' ? 'English' : user.locale} 
-                    icon={Globe} 
-                  />
-                  <InfoCard 
-                    label="Дата регистрации" 
-                    value={formatDate(user.createdAt, user.locale)} 
-                    icon={Calendar} 
+                  <InfoCard
+                    label="Дата регистрации"
+                    value={user.createdAt}
+                    icon={Calendar}
                   />
                 </div>
-              )}
+              }
             </CardContent>
           </Card>
         </div>

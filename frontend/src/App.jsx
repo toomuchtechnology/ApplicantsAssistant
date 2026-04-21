@@ -1,8 +1,9 @@
-import { Header } from "./components/ui/header"
-import { InfoSection } from './components/ui/info'
-import { Chat } from './components/ui/chat/chat'
-import { ProfilePage } from './components/ui/profile/profile'
-import { useState } from "react"
+import { Header } from "./components/ui/header";
+import { InfoSection } from "./components/ui/info";
+import { Chat } from "./components/ui/chat/chat";
+import RAGChat from "./components/ui/rag-chat/RAGChat";
+import { ProfilePage } from "./components/ui/profile/profile";
+import { useState } from "react";
 
 function App() {
   const [activeTab, setActiveTab] = useState("chat");
@@ -12,9 +13,9 @@ function App() {
       case "info":
         return <InfoSection />;
       case "chat":
-        return <Chat />;
+        return <RAGChat />;
       case "profile":
-        return <ProfilePage/>
+        return <ProfilePage />;
       default:
         return <Chat />;
     }
@@ -25,7 +26,7 @@ function App() {
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
       {renderContent()}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

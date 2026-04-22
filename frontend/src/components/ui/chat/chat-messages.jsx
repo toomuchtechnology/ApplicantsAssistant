@@ -42,11 +42,7 @@ export const ChatMessages = memo(({ messages, isLoading }) => {
               </Avatar>
               
               <div
-                className={`rounded-xl px-5 py-4 ${
-                  message.role === "user"
-                    ? "bg-primary text-primary-foreground ml-auto"
-                    : "bg-card border border-border shadow-sm"
-                }`}
+                className={`rounded-xl px-5 py-4 bg-card border border-border shadow-sm`}
                 style={{
                   width: 'fit-content',
                   maxWidth: '75vw',
@@ -63,11 +59,7 @@ export const ChatMessages = memo(({ messages, isLoading }) => {
                   </p>
                 )}
                 
-                <p className={`text-xs mt-3 ${
-                  message.role === "user" 
-                    ? "text-primary-foreground/70" 
-                    : "text-muted-foreground"
-                }`}>
+                <p className={`text-xs mt-3 text-muted-foreground`}>
                   {new Date(message.timestamp).toLocaleTimeString([], { 
                     hour: '2-digit', 
                     minute: '2-digit' 

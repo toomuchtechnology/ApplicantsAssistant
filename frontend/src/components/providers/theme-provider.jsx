@@ -1,4 +1,3 @@
-// components/theme-provider.jsx
 import { createContext, useContext, useEffect, useState } from "react"
 
 const ThemeProviderContext = createContext()
@@ -35,7 +34,6 @@ export function ThemeProvider({
     if (stored) {
       setTheme(stored)
     } else {
-      // Если в localStorage ничего нет, используем defaultTheme
       setTheme(defaultTheme)
     }
   }, [defaultTheme, storageKey])

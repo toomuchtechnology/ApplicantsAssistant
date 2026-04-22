@@ -38,7 +38,6 @@ const callChatEndpoint = async (message, mode) => {
   }
 };
 
-// Конкретные функции для каждого режима
 const fetchUniversityChat = async (message) => {
   return callChatEndpoint(message, 'university');
 };
@@ -51,7 +50,6 @@ const fetchLlmChat = async (message) => {
   return callChatEndpoint(message, 'llm');
 };
 
-// Хук для использования в компонентах
 export const useChatAPI = () => {
   const sendMessage = async (message, mode) => {
     switch (mode) {

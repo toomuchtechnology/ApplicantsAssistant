@@ -1,10 +1,10 @@
-﻿using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
+using backend.Data;
 using backend.DTOs;
-using backend.Services;
+using backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace backend.Controllers;
 
@@ -13,169 +13,209 @@ namespace backend.Controllers;
 [Authorize]
 public class ChatController : ControllerBase
 {
-    private readonly IOpenRouterService _openRouterService;
+    private readonly AppDbContext _context;
     private readonly ILogger<ChatController> _logger;
-    private readonly IBsuirbotService _botService;
-    private readonly HttpClient _httpClient;
-    private readonly IKeyVaultService _keyVaultService;
 
-    public ChatController(IOpenRouterService openRouterService, ILogger<ChatController> logger,
-        IBsuirbotService bsuirBotService, IHttpClientFactory httpClientFactory, IKeyVaultService keyVaultService)
+    public ChatController(AppDbContext context, ILogger<ChatController> logger)
     {
-        _openRouterService = openRouterService;
+        _context = context;
         _logger = logger;
-        _botService = bsuirBotService;
-        _httpClient = httpClientFactory.CreateClient();
-        _keyVaultService = keyVaultService;
-        _ = InitializeAsync();
     }
 
-    public async Task InitializeAsync()
+    private int? GetCurrentUserId()
     {
-        var url = await _keyVaultService.GetBaseUrlAsync();
-        _httpClient.BaseAddress = new Uri(url);
+        var value = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return string.IsNullOrEmpty(value) ? null : int.Parse(value);
     }
 
-    [HttpPost("university")]
-    public async Task<ActionResult<LlmResponseDto>> UniversityChat([FromBody] ChatRequestDto request)
+    // ── Sessions ──────────────────────────────────────────────────────────────
+
+    [HttpGet("sessions")]
+    public async Task<ActionResult<List<ChatSessionDto>>> GetChatSessions()
     {
-        var userId = GetUserId();
-        if (userId == null)
-            return Unauthorized();
+        var userId = GetCurrentUserId();
+        if (userId == null) return Unauthorized();
+
+        var sessions = await _context.ChatSessions
+            .Where(s => s.UserId == userId.Value && s.IsActive)
+            .OrderByDescending(s => s.UpdatedAt)
+            .Select(s => new ChatSessionDto
+            {
+                Id = s.Id,
+                Title = s.Title,
+                Mode = s.Mode,
+                Model = s.Model,
+                CreatedAt = s.CreatedAt,
+                UpdatedAt = s.UpdatedAt,
+                MessageCount = s.Messages.Count
+            })
+            .ToListAsync();
+
+        return Ok(sessions);
+    }
+
+    [HttpGet("sessions/{sessionId:guid}")]
+    public async Task<ActionResult<ChatSessionDto>> GetChatSession(Guid sessionId)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Unauthorized();
+
+        var session = await _context.ChatSessions
+            .Where(s => s.Id == sessionId && s.UserId == userId.Value && s.IsActive)
+            .Select(s => new ChatSessionDto
+            {
+                Id = s.Id,
+                Title = s.Title,
+                Mode = s.Mode,
+                Model = s.Model,
+                CreatedAt = s.CreatedAt,
+                UpdatedAt = s.UpdatedAt,
+                MessageCount = s.Messages.Count
+            })
+            .FirstOrDefaultAsync();
+
+        return session == null ? NotFound() : Ok(session);
+    }
+
+    [HttpPost("sessions")]
+    public async Task<ActionResult<ChatSessionDto>> CreateSession([FromBody] CreateChatSessionDto dto)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Unauthorized();
+
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var session = new ChatSession
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId.Value,
+            Title = string.IsNullOrWhiteSpace(dto.Title) ? "New Chat" : dto.Title,
+            Mode = dto.Mode,
+            Model = dto.Model,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            IsActive = true
+        };
+
+        _context.ChatSessions.Add(session);
+        await _context.SaveChangesAsync();
+
+        return Ok(new ChatSessionDto
+        {
+            Id = session.Id,
+            Title = session.Title,
+            Mode = session.Mode,
+            Model = session.Model,
+            CreatedAt = session.CreatedAt,
+            UpdatedAt = session.UpdatedAt,
+            MessageCount = 0
+        });
+    }
+
+    [HttpPut("sessions/{sessionId:guid}")]
+    public async Task<IActionResult> UpdateSessionTitle(Guid sessionId, [FromBody] UpdateSessionTitleDto dto)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Unauthorized();
+
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var session = await _context.ChatSessions
+            .FirstOrDefaultAsync(s => s.Id == sessionId && s.UserId == userId.Value);
+
+        if (session == null) return NotFound();
+
+        session.Title = dto.Title;
+        session.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpDelete("sessions/{sessionId:guid}")]
+    public async Task<IActionResult> DeleteSession(Guid sessionId)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Unauthorized();
+
+        var session = await _context.ChatSessions
+            .FirstOrDefaultAsync(s => s.Id == sessionId && s.UserId == userId.Value);
+
+        if (session == null) return NotFound();
+
+        session.IsActive = false;
+        session.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    // ── Messages ──────────────────────────────────────────────────────────────
+
+    [HttpGet("sessions/{sessionId:guid}/messages")]
+    public async Task<ActionResult<List<ChatMessageDto>>> GetChatMessages(Guid sessionId)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Unauthorized();
+
+        // Ownership check
+        var sessionExists = await _context.ChatSessions
+            .AnyAsync(s => s.Id == sessionId && s.UserId == userId.Value);
+
+        if (!sessionExists) return NotFound();
+
+        var messages = await _context.ChatMessages
+            .Where(m => m.ChatSessionId == sessionId)
+            .OrderBy(m => m.OrderNumber)
+            .Select(m => new ChatMessageDto
+            {
+                Id = m.Id,
+                Role = m.Role,
+                Content = m.Content,
+                Timestamp = m.Timestamp,
+                OrderNumber = m.OrderNumber
+            })
+            .ToListAsync();
+
+        return Ok(messages);
+    }
+
+    [HttpPost("messages")]
+    public async Task<ActionResult<object>> SaveMessage([FromBody] SaveMessageDto dto)
+    {
+        var userId = GetCurrentUserId();
+        if (userId == null) return Unauthorized();
+
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var session = await _context.ChatSessions
+            .FirstOrDefaultAsync(s => s.Id == dto.ChatSessionId && s.UserId == userId.Value);
+
+        if (session == null) return NotFound();
+
+        var message = new ChatMessage
+        {
+            Id = Guid.NewGuid(),
+            ChatSessionId = dto.ChatSessionId,
+            Role = dto.Role,
+            Content = dto.Content,
+            Timestamp = DateTime.UtcNow,
+            OrderNumber = await _context.ChatMessages
+                .CountAsync(m => m.ChatSessionId == dto.ChatSessionId) + 1
+        };
+
+        _context.ChatMessages.Add(message);
+        session.UpdatedAt = DateTime.UtcNow;
 
         try
         {
-            var inputText = request.Request;
-            var apiResponse = await _botService.GetApiResponseAsync(inputText);
-
-            return Ok(apiResponse);
+            await _context.SaveChangesAsync();
+            return Ok(new { messageId = message.Id });
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Ошибка при вызове BsuirBot API");
-
-            return StatusCode(StatusCodes.Status500InternalServerError, new
-            {
-                error = "Ошибка при вызове BsuirBot API",
-                details = ex.Message
-            });
+            _logger.LogError(ex, "Error saving message for session {SessionId}", dto.ChatSessionId);
+            return StatusCode(500, new { message = "An error occurred while saving the message" });
         }
-    }
-
-    [HttpPost("files")]
-    public async Task<ActionResult<LlmResponseDto>> FilesChat([FromBody] ChatRequestDto request)
-    {
-        string? userId = GetUserId().ToString();
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized(new { error = "User not authenticated" });
-
-        try
-        {
-            // создаём объект в snake_case, как ждёт Python
-            var pythonRequest = new
-            {
-                user_id = userId,
-                query = request.Request,
-                max_files = 10
-            };
-
-            var json = JsonSerializer.Serialize(
-                pythonRequest,
-                new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
-                });
-
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PostAsync("/teacher/ask", content);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"Python API error: {response.StatusCode} - {errorContent}");
-
-                return StatusCode((int)response.StatusCode, new
-                {
-                    error = $"Error asking question: {response.ReasonPhrase}",
-                    details = errorContent
-                });
-            }
-
-            var resultJson = await response.Content.ReadAsStringAsync();
-
-            using var doc = JsonDocument.Parse(resultJson);
-            var root = doc.RootElement;
-
-            string answer = root.TryGetProperty("teacher_response", out var tr)
-                ? tr.GetString()
-                : root.TryGetProperty("answer", out var ans)
-                    ? ans.GetString()
-                    : resultJson;
-
-            return Ok(new LlmResponseDto(answer));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error asking question");
-            return StatusCode(500, new { error = ex.Message });
-        }
-    }
-
-
-    [HttpPost("llm")]
-    public async Task<ActionResult<LlmResponseDto>> LlmChat([FromBody] ChatRequestDto request)
-    {
-        var userId = GetUserId();
-        if (userId == null)
-            return Unauthorized();
-
-        try
-        {
-            var response = await _openRouterService.GetAnalysisAsync(request.Request);
-            return Ok(new LlmResponseDto(ParseLlmResponse(response)));
-        }
-        catch (Exception e)
-        {
-            return StatusCode(500, new { message = "Failed to get response" });
-        }
-    }
-
-    private int? GetUserId()
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-            return null;
-
-        return userId;
-    }
-
-    private string ParseLlmResponse(string response)
-    {
-        var jsonDocument = JsonDocument.Parse(response);
-        var root = jsonDocument.RootElement;
-
-        string content;
-
-        if (root.TryGetProperty("choices", out var choices) &&
-            choices.GetArrayLength() > 0)
-        {
-            var firstChoice = choices[0];
-            if (firstChoice.TryGetProperty("message", out var message) &&
-                message.TryGetProperty("content", out var contentElement))
-            {
-                content = contentElement.GetString() ?? "";
-            }
-            else
-            {
-                throw new Exception("Invalid OpenRouter response structure");
-            }
-        }
-        else
-        {
-            content = response;
-        }
-
-        return content;
     }
 }

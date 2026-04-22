@@ -10,9 +10,11 @@ import {
   Calendar,
   Search,
   X,
+  Edit2,
+  Check,
 } from "lucide-react";
 import { useAuth } from "../auth-component";
-import { chatService } from "./chatService"; // ← same folder, same instance as RAGChat
+import { chatService } from "./chatService";
 
 export const ChatsPage = () => {
   const navigate = useNavigate();
@@ -22,6 +24,9 @@ export const ChatsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingId, setDeletingId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const loadSessions = async () => {
     setIsLoading(true);
@@ -42,11 +47,9 @@ export const ChatsPage = () => {
   const handleNewChat = async () => {
     setIsCreating(true);
     try {
-      // Create the session now so the title can be updated later from the first message.
-      // RAGChat will receive the sessionId from the URL and skip its own ensureSession.
       const newSession = await chatService.createSession(
         "rag",
-        "claude-sonnet-4-20250514",
+        import.meta.env.OPENROUTER_MODEL,
         "New Chat",
       );
       if (!newSession?.id) throw new Error("No session id returned");
@@ -75,6 +78,51 @@ export const ChatsPage = () => {
       console.error("Failed to delete chat:", error);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleStartEdit = (e, session) => {
+    e.stopPropagation();
+    setEditingId(session.id);
+    setEditingTitle(session.title);
+  };
+
+  const handleCancelEdit = (e) => {
+    if (e) e.stopPropagation();
+    setEditingId(null);
+    setEditingTitle("");
+  };
+
+  const handleSaveEdit = async (e, sessionId) => {
+    e.stopPropagation();
+    if (!editingTitle.trim()) {
+      handleCancelEdit(e);
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await chatService.updateSessionTitle(sessionId, editingTitle.trim());
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.id === sessionId ? { ...s, title: editingTitle.trim() } : s,
+        ),
+      );
+      setEditingId(null);
+      setEditingTitle("");
+    } catch (error) {
+      console.error("Failed to update chat title:", error);
+      alert("Failed to update chat title. Please try again.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleKeyDown = (e, sessionId) => {
+    if (e.key === "Enter") {
+      handleSaveEdit(e, sessionId);
+    } else if (e.key === "Escape") {
+      handleCancelEdit(e);
     }
   };
 
@@ -128,16 +176,16 @@ export const ChatsPage = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                My Chats
+                Мои чаты
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
-                Continue your conversations or start new ones
+                Просматривайте и продолжайте ваши чаты или начните новый
               </p>
             </div>
             <button
               onClick={handleNewChat}
               disabled={isCreating}
-              className="px-5 py-2.5 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white rounded-xl font-medium transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 bg-gray-900 outline-2 text-white rounded-xl font-medium transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 animate-pulse-slow"
             >
               {isCreating ? (
                 <>
@@ -147,7 +195,7 @@ export const ChatsPage = () => {
               ) : (
                 <>
                   <Plus className="h-4 w-4" />
-                  <span>New Chat</span>
+                  <span>Новый чат</span>
                 </>
               )}
             </button>
@@ -222,35 +270,85 @@ export const ChatsPage = () => {
             {filteredSessions.map((session) => (
               <div
                 key={session.id}
-                onClick={() => handleOpenChat(session.id)}
-                className="group bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-primary/50 hover:shadow-lg transition-all duration-200 cursor-pointer overflow-hidden"
+                onClick={() =>
+                  editingId !== session.id && handleOpenChat(session.id)
+                }
+                className={`group bg-white dark:bg-gray-900 rounded-xl border transition-all duration-200 cursor-pointer overflow-hidden border-gray-200 dark:border-gray-800 hover:border-primary/50 hover:shadow-lg`}
               >
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div className="p-2 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5">
                       <MessageSquare className="h-5 w-5 text-primary" />
                     </div>
-                    <button
-                      onClick={(e) => handleDeleteChat(e, session.id)}
-                      disabled={deletingId === session.id}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-all duration-200 disabled:opacity-50"
-                    >
-                      {deletingId === session.id ? (
-                        <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                    <div className="flex items-center gap-1">
+                      {editingId !== session.id && (
+                        <button
+                          onClick={(e) => handleStartEdit(e, session)}
+                          className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200"
+                          title="Edit chat name"
+                        >
+                          <Edit2 className="h-4 w-4 text-blue-500" />
+                        </button>
                       )}
-                    </button>
+                      <button
+                        onClick={(e) => handleDeleteChat(e, session.id)}
+                        disabled={deletingId === session.id}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-all duration-200 disabled:opacity-50"
+                      >
+                        {deletingId === session.id ? (
+                          <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 text-lg">
-                    {session.title}
-                  </h3>
+                  {/* Title with editing capability */}
+                  {editingId === session.id ? (
+                    <div className="mb-2" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(e, session.id)}
+                          className="flex-1 px-2 py-1 text-lg font-semibold bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          autoFocus
+                          disabled={isUpdating}
+                        />
+                        <button
+                          onClick={(e) => handleSaveEdit(e, session.id)}
+                          disabled={isUpdating}
+                          className="p-1.5  bg-gray-500 hover:bg-gray-600  text-white rounded-lg transition-colors disabled:opacity-50"
+                          title="Save"
+                        >
+                          {isUpdating ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <Check className="h-4 w-4" />
+                          )}
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          disabled={isUpdating}
+                          className="p-1.5 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors disabled:opacity-50"
+                          title="Cancel"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 text-lg">
+                      {session.title}
+                    </h3>
+                  )}
 
                   <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-3">
                     <div className="flex items-center gap-1.5">
                       <MessageSquare className="h-3.5 w-3.5" />
-                      <span>{session.messageCount ?? 0} messages</span>
+                      <span>{session.messageCount ?? 0} сообщений</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5" />
@@ -262,7 +360,7 @@ export const ChatsPage = () => {
                     <div className="flex items-center gap-1.5 text-xs text-gray-400">
                       <Calendar className="h-3 w-3" />
                       <span>
-                        Created:{" "}
+                        Создан:{" "}
                         {new Date(session.createdAt).toLocaleDateString()}
                       </span>
                     </div>
@@ -277,7 +375,7 @@ export const ChatsPage = () => {
         {!isLoading && sessions.length > 0 && (
           <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
             <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-              Total {sessions.length} chat{sessions.length !== 1 ? "s" : ""}
+              Всего: {sessions.length}
             </p>
           </div>
         )}

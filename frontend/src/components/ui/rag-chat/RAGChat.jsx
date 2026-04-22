@@ -360,11 +360,11 @@ const RAGChat = ({ model = "claude-sonnet-4-20250514", mode = "rag" }) => {
                     className="flex justify-end animate-in fade-in slide-in-from-bottom-2 duration-300"
                   >
                     <div className="max-w-[85%] md:max-w-[70%]">
-                      <div className="rounded-2xl px-5 py-3 bg-primary text-primary-foreground">
+                      <div className="rounded-2xl px-5 py-3 bg-gray-100 outline-1 dark:bg-gray-900 text-primary">
                         <p className="text-sm md:text-base whitespace-pre-wrap break-words">
                           {message.content}
                         </p>
-                        <p className="text-xs mt-1.5 text-primary-foreground/70">
+                        <p className="text-xs mt-1.5 text-primary/70">
                           {new Date(message.timestamp).toLocaleTimeString()}
                         </p>
                       </div>
@@ -391,7 +391,7 @@ const RAGChat = ({ model = "claude-sonnet-4-20250514", mode = "rag" }) => {
       <ChatInput
         onSend={handleSendMessage}
         isLoading={isProcessing}
-        placeholder="Задайте вопрос о документах..."
+        placeholder="Задайте вопрос..."
         disabled={!isConnected}
         isConnected={isConnected}
         models={[]}

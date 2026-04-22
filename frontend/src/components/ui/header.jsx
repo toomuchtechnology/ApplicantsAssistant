@@ -20,8 +20,8 @@ export const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navigationItems = [
-    { id: "info", label: "О проекте", icon: Info, path: "/info" },
-    { id: "chats", label: "RAG-чат", icon: MessagesSquare, path: "/chats" },
+    { id: "info", label: "Справка", icon: Info, path: "/info" },
+    { id: "chats", label: "Чаты", icon: MessagesSquare, path: "/chats" },
     { id: "profile", label: "Профиль", icon: User, path: "/profile" },
   ];
 
@@ -65,7 +65,7 @@ export const Header = () => {
               return (
                 <Button
                   key={item.id}
-                  variant={isActive(item.path) ? "default" : "ghost"}
+                  variant="ghost"
                   onClick={() => handleNavigation(item.path)}
                   className="flex items-center space-x-2"
                 >

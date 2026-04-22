@@ -265,8 +265,8 @@ export const ChatInput = memo(
               disabled={isLoading || !value.trim() || disabled || !isConnected}
               className="
               w-10 h-10 rounded-full flex-shrink-0
-              bg-gradient-to-r from-primary to-primary/80
-              hover:from-primary/90 hover:to-primary/70
+              bg-gradient-to-r from-gray-800 to-gray-700
+              hover:from-gray-800/90 hover:to-gray-700/90
               disabled:opacity-50 disabled:cursor-not-allowed
               flex items-center justify-center
               transition-all duration-200

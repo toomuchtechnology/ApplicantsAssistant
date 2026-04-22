@@ -1,5 +1,6 @@
 // components/rag-chat/RAGEventComponents.jsx
 import { memo } from "react";
+import { motion } from "framer-motion";
 import {
   Loader2,
   Brain,

@@ -20,7 +20,8 @@ import {
   BookOpen,
 } from "lucide-react";
 
-const isNumeric = (str) => !isNaN(str);
+const isNumeric = (val) =>
+  val !== "" && val !== null && val !== undefined && isFinite(Number(val));
 
 const iconMap = {
   search: Search,

@@ -1,23 +1,53 @@
+// src/components/ui/header.jsx
 import React, { useState } from "react";
 import { Button } from "./button";
 import { ThemeToggle } from "./theme-toggle";
 import { AuthComponent } from "./auth-component";
-import { GraduationCap, Info, MessageSquare, Menu, X, User } from "lucide-react";
+import {
+  GraduationCap,
+  Info,
+  MessageSquare,
+  Menu,
+  X,
+  User,
+  MessagesSquare,
+} from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 
-export const Header = ({ activeTab, onTabChange }) => {
+export const Header = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navigationItems = [
-    { id: "info", label: "О проекте", icon: Info },
-    { id: "chat", label: "RAG-чат", icon: MessageSquare },
-    { id: "profile", label: "Профиль", icon: User}
+    { id: "info", label: "О проекте", icon: Info, path: "/info" },
+    { id: "chats", label: "RAG-чат", icon: MessagesSquare, path: "/chats" },
+    { id: "profile", label: "Профиль", icon: User, path: "/profile" },
   ];
+
+  const isActive = (path) => {
+    if (path === "/chats") {
+      return (
+        location.pathname === "/chats" ||
+        location.pathname.startsWith("/rag-chat/")
+      );
+    }
+    return location.pathname === path;
+  };
+
+  const handleNavigation = (path) => {
+    navigate(path);
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-3">
+          <div
+            className="flex items-center space-x-3 cursor-pointer"
+            onClick={() => navigate("/")}
+          >
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <GraduationCap className="h-5 w-5 text-primary-foreground" />
             </div>
@@ -25,7 +55,7 @@ export const Header = ({ activeTab, onTabChange }) => {
               Ассистент абитуриента
             </h1>
             <h1 className="text-xl font-bold text-foreground sm:hidden">
-              Aссистент
+              Ассистент
             </h1>
           </div>
 
@@ -35,8 +65,8 @@ export const Header = ({ activeTab, onTabChange }) => {
               return (
                 <Button
                   key={item.id}
-                  variant={activeTab === item.id ? "default" : "ghost"}
-                  onClick={() => onTabChange(item.id)}
+                  variant={isActive(item.path) ? "default" : "ghost"}
+                  onClick={() => handleNavigation(item.path)}
                   className="flex items-center space-x-2"
                 >
                   <Icon className="h-4 w-4" />
@@ -78,11 +108,8 @@ export const Header = ({ activeTab, onTabChange }) => {
                 return (
                   <Button
                     key={item.id}
-                    variant={activeTab === item.id ? "default" : "ghost"}
-                    onClick={() => {
-                      onTabChange(item.id);
-                      setIsMobileMenuOpen(false);
-                    }}
+                    variant={isActive(item.path) ? "default" : "ghost"}
+                    onClick={() => handleNavigation(item.path)}
                     className="justify-start"
                   >
                     <Icon className="h-4 w-4 mr-2" />

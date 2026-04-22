@@ -1,31 +1,28 @@
+// App.js
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Header } from "./components/ui/header";
 import { InfoSection } from "./components/ui/info";
 import { Chat } from "./components/ui/chat/chat";
 import RAGChat from "./components/ui/rag-chat/RAGChat";
+import { ChatsPage } from "./components/ui/rag-chat/ChatsPage";
 import { ProfilePage } from "./components/ui/profile/profile";
-import { useState } from "react";
 
 function App() {
-  const [activeTab, setActiveTab] = useState("chat");
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case "info":
-        return <InfoSection />;
-      case "chat":
-        return <RAGChat />;
-      case "profile":
-        return <ProfilePage />;
-      default:
-        return <Chat />;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Header activeTab={activeTab} onTabChange={setActiveTab} />
-      {renderContent()}
-    </div>
+    <BrowserRouter>
+      <div className="min-h-screen bg-background text-foreground">
+        <Header />
+        <Routes>
+          <Route path="/" element={<Navigate to="/chats" replace />} />
+          <Route path="/info" element={<InfoSection />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/chats" element={<ChatsPage />} />
+          <Route path="/rag-chat/:sessionId" element={<RAGChat />} />
+          <Route path="/rag-chat" element={<RAGChat />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
 

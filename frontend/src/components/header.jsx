@@ -1,6 +1,6 @@
 // src/components/ui/header.jsx
 import React, { useState } from "react";
-import { Button } from "./button";
+import { Button } from "./ui/button";
 import { ThemeToggle } from "./theme-toggle";
 import { AuthComponent } from "./auth-component";
 import {

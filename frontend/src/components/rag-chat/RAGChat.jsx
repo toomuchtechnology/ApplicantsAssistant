@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useRAGWebSocket } from "./useRAGWebSocket";
-import { ChatInput } from "../chat/chat-input";
+import { ChatInput } from "./chat-input";
 import { StreamingMessage } from "./StreamingMessage";
 import { FinalMessage } from "./FinalMessage";
 import { chatService } from "./chatService"; // same folder as ChatsPage

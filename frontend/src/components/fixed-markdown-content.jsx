@@ -8,7 +8,7 @@ import {
   vs,
 } from "react-syntax-highlighter/dist/esm/styles/prism";
 
-import { useTheme } from "../providers/theme-provider";
+import { useTheme } from "./providers/theme-provider";
 
 const fixTextCodeBlocks = (content) => {
   if (!content) return content;

@@ -1,13 +1,12 @@
 // App.js
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { Header } from "./components/ui/header";
-import { InfoSection } from "./components/ui/info";
-import { Chat } from "./components/ui/chat/chat";
-import RAGChat from "./components/ui/rag-chat/RAGChat";
-import { ChatsPage } from "./components/ui/rag-chat/ChatsPage";
-import { ProfilePage } from "./components/ui/profile/profile";
-import { NotFound } from "./components/ui/NotFound";
-import { ErrorPage } from "./components/ui/ErrorPage";
+import { Header } from "./components/header";
+import { InfoSection } from "./components/info";
+import RAGChat from "./components/rag-chat/RAGChat";
+import { ChatsPage } from "./components/rag-chat/ChatsPage";
+import { ProfilePage } from "./components/profile/profile";
+import { NotFound } from "./components/NotFound";
+import { ErrorPage } from "./components/ErrorPage";
 
 function App() {
   return (
@@ -17,7 +16,6 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/chats" replace />} />
           <Route path="/info" element={<InfoSection />} />
-          <Route path="/chat" element={<Chat />} />
           <Route path="/chats" element={<ChatsPage />} />
           <Route path="/rag-chat/:sessionId" element={<RAGChat />} />
           <Route path="/rag-chat" element={<RAGChat />} />

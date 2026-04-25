@@ -1,8 +1,8 @@
 // src/components/ui/profile/profile.jsx
 import { useState, useEffect, useCallback } from "react";
-import { Button } from "../button";
-import { Avatar, AvatarFallback, AvatarImage } from "../avatar";
-import { Alert, AlertDescription } from "../alert";
+import { Button } from "../ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Alert, AlertDescription } from "../ui/alert";
 import {
   User,
   Mail,

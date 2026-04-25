@@ -146,7 +146,7 @@ export const Header = () => {
                     )}
                     <span>{item.label}</span>
                     {showChatBadge && (
-                      <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
+                      <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full bg-blue-100 outline-1 dark:bg-blue-900 text-blue-950 dark:text-blue-300">
                         В чате
                       </span>
                     )}

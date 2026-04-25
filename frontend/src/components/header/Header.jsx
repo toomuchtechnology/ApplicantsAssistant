@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { ThemeToggle } from "../theme-toggle";
-import { AuthComponent } from "../auth-component";
+import { AuthComponent } from "../auth";
 import { HeaderLogo } from "./HeaderLogo";
 import { NavButton } from "./NavButton";
 import { useNavigation } from "./useNavigation";

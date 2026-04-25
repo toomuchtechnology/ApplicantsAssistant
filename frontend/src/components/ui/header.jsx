@@ -6,11 +6,11 @@ import { AuthComponent } from "./auth-component";
 import {
   GraduationCap,
   Info,
-  MessageSquare,
   Menu,
   X,
   User,
   MessagesSquare,
+  MessageSquareText,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -25,13 +25,16 @@ export const Header = () => {
     { id: "profile", label: "Профиль", icon: User, path: "/profile" },
   ];
 
+  // "chats" list page — exact match only
+  const isChatsListActive = location.pathname === "/chats";
+
+  // Inside a specific chat session
+  const isInChat =
+    location.pathname.startsWith("/rag-chat/") ||
+    location.pathname === "/rag-chat";
+
   const isActive = (path) => {
-    if (path === "/chats") {
-      return (
-        location.pathname === "/chats" ||
-        location.pathname.startsWith("/rag-chat/")
-      );
-    }
+    if (path === "/chats") return isChatsListActive || isInChat;
     return location.pathname === path;
   };
 
@@ -44,51 +47,71 @@ export const Header = () => {
     <header className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
+          {/* Logo */}
           <div
-            className="flex items-center space-x-3 cursor-pointer"
+            className="flex items-center gap-2.5 cursor-pointer select-none"
             onClick={() => navigate("/")}
           >
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
               <GraduationCap className="h-5 w-5 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-bold text-foreground hidden sm:block">
+            <span className="text-base font-semibold text-foreground hidden sm:block leading-tight">
               Ассистент абитуриента
-            </h1>
-            <h1 className="text-xl font-bold text-foreground sm:hidden">
+            </span>
+            <span className="text-base font-semibold text-foreground sm:hidden leading-tight">
               Ассистент
-            </h1>
+            </span>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-1">
+          {/* Desktop nav — centered */}
+          <nav className="hidden md:flex items-center gap-1">
             {navigationItems.map((item) => {
               const Icon = item.icon;
+              const active = isActive(item.path);
+
+              // For the "Чаты" item, show a sub-indicator when inside a chat
+              const showChatBadge = item.id === "chats" && isInChat;
+
               return (
                 <Button
                   key={item.id}
-                  variant="ghost"
+                  variant={active ? "default" : "ghost"}
+                  size="sm"
                   onClick={() => handleNavigation(item.path)}
-                  className="flex items-center space-x-2"
+                  className="flex items-center gap-1.5 relative"
                 >
-                  <Icon className="h-4 w-4" />
+                  {showChatBadge ? (
+                    <MessageSquareText className="h-4 w-4" />
+                  ) : (
+                    <Icon className="h-4 w-4" />
+                  )}
                   <span>{item.label}</span>
+                  {/* Subtle dot when inside a specific chat */}
+                  {showChatBadge && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 border-2 border-white dark:border-gray-950" />
+                  )}
                 </Button>
               );
             })}
           </nav>
 
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-2">
+          {/* Right side actions */}
+          <div className="flex items-center gap-2">
+            {/* Desktop */}
+            <div className="hidden md:flex items-center gap-2">
               <ThemeToggle />
               <AuthComponent />
             </div>
 
-            <div className="flex md:hidden items-center space-x-2">
+            {/* Mobile */}
+            <div className="flex md:hidden items-center gap-2">
               <ThemeToggle />
               <AuthComponent />
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="Toggle menu"
               >
                 {isMobileMenuOpen ? (
                   <X className="h-5 w-5" />
@@ -100,20 +123,33 @@ export const Header = () => {
           </div>
         </div>
 
+        {/* Mobile menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 dark:border-gray-800 py-2">
-            <div className="flex flex-col space-y-1">
+            <div className="flex flex-col gap-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
+                const active = isActive(item.path);
+                const showChatBadge = item.id === "chats" && isInChat;
+
                 return (
                   <Button
                     key={item.id}
-                    variant={isActive(item.path) ? "default" : "ghost"}
+                    variant={active ? "default" : "ghost"}
                     onClick={() => handleNavigation(item.path)}
-                    className="justify-start"
+                    className="justify-start gap-2"
                   >
-                    <Icon className="h-4 w-4 mr-2" />
-                    {item.label}
+                    {showChatBadge ? (
+                      <MessageSquareText className="h-4 w-4" />
+                    ) : (
+                      <Icon className="h-4 w-4" />
+                    )}
+                    <span>{item.label}</span>
+                    {showChatBadge && (
+                      <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300">
+                        В чате
+                      </span>
+                    )}
                   </Button>
                 );
               })}

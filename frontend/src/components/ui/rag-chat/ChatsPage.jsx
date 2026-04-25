@@ -1,21 +1,184 @@
 // src/components/ui/rag-chat/ChatsPage.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  MessageSquare,
-  Plus,
-  Trash2,
-  Clock,
-  Bot,
-  Calendar,
-  Search,
-  X,
-  Edit2,
-  Check,
-} from "lucide-react";
-import { useAuth } from "../auth-component";
+import { Plus, Bot, Search, X, Sparkles, MessagesSquare } from "lucide-react";
+import { useAuth, AuthComponent } from "../auth-component";
 import { chatService } from "./chatService";
+import { Button } from "@/components/ui/button";
+import { ChatCard } from "./ChatCard";
 
+// ── Animated "not authenticated" state ──────────────────────────────────────
+const UnauthenticatedState = () => (
+  <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-6">
+    <style>{`
+      @keyframes shimmer {
+        0%   { background-position: -200% center; }
+        100% { background-position:  200% center; }
+      }
+      .login-shimmer-wrap {
+        background: linear-gradient(
+          90deg,
+          hsl(var(--primary)) 0%,
+          hsl(var(--primary) / 0.65) 40%,
+          hsl(var(--primary)) 60%,
+          hsl(var(--primary) / 0.65) 100%
+        );
+        background-size: 200% auto;
+        animation: shimmer 2.4s linear infinite;
+        border-radius: 12px;
+        padding: 1.5px;
+      }
+      @keyframes float-ring {
+        0%, 100% { transform: scale(1);    opacity: 0.18; }
+        50%       { transform: scale(1.07); opacity: 0.3;  }
+      }
+      .ring-a { animation: float-ring 3s   ease-in-out infinite; }
+      .ring-b { animation: float-ring 3s   ease-in-out infinite 0.6s; }
+      .ring-c { animation: float-ring 3s   ease-in-out infinite 1.2s; }
+    `}</style>
+
+    <div className="w-full max-w-sm text-center">
+      {/* Floating rings */}
+      <div className="relative flex items-center justify-center mb-8">
+        <span className="ring-a absolute w-32 h-32 rounded-full border-2 border-blue-300 dark:border-blue-700" />
+        <span
+          className="ring-b absolute rounded-full border border-blue-300/70 dark:border-blue-700/70"
+          style={{ width: 88, height: 88 }}
+        />
+        <span className="ring-c absolute w-16 h-16 rounded-full border border-blue-200 dark:border-blue-800" />
+        <div className="relative z-10 w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-xl shadow-blue-500/30">
+          <Bot className="h-7 w-7 text-white" />
+        </div>
+      </div>
+
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+        Добро пожаловать
+      </h2>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+        Войдите в аккаунт, чтобы начать общение
+        <br />с ассистентом абитуриента
+      </p>
+
+      <div className="flex flex-wrap justify-center gap-2 mb-8">
+        {["Умный поиск", "История чатов", "Быстрые ответы"].map((f) => (
+          <span
+            key={f}
+            className="text-xs px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
+          >
+            {f}
+          </span>
+        ))}
+      </div>
+
+      {/* Shimmer-border animated login button */}
+      <div className="flex flex-col items-center gap-2">
+        <div className="relative group">
+          {/* Glow halo */}
+          <div className="absolute inset-0 rounded-xl bg-primary/25 blur-lg scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          {/* Shimmer gradient border */}
+          <div className="login-shimmer-wrap">
+            <div className="rounded-[10px] bg-white dark:bg-gray-950 px-6 py-2.5 flex items-center justify-center min-w-[180px]">
+              <AuthComponent />
+            </div>
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          Через Google аккаунт — быстро и безопасно
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+// ── Animated "no chats" empty state ─────────────────────────────────────────
+const EmptyChatsState = ({ onNewChat, isCreating }) => (
+  <div className="flex items-center justify-center py-16">
+    <style>{`
+      @keyframes orbit {
+        from { transform: rotate(0deg) translateX(44px) rotate(0deg); }
+        to   { transform: rotate(360deg) translateX(44px) rotate(-360deg); }
+      }
+    `}</style>
+    <div className="w-full max-w-sm text-center">
+      <div className="relative flex items-center justify-center mb-8 h-24">
+        {[
+          {
+            dur: "4s",
+            dir: "normal",
+            sz: 8,
+            color: "hsl(var(--primary) / 0.4)",
+            delay: "0s",
+          },
+          {
+            dur: "6s",
+            dir: "reverse",
+            sz: 6,
+            color: "hsl(217 91% 60% / 0.45)",
+            delay: "0s",
+          },
+          {
+            dur: "5s",
+            dir: "normal",
+            sz: 5,
+            color: "hsl(var(--primary) / 0.25)",
+            delay: "1.5s",
+          },
+        ].map((dot, i) => (
+          <span
+            key={i}
+            style={{
+              position: "absolute",
+              width: dot.sz,
+              height: dot.sz,
+              borderRadius: "50%",
+              background: dot.color,
+              top: "50%",
+              left: "50%",
+              marginTop: -dot.sz / 2,
+              marginLeft: -dot.sz / 2,
+              animation: `orbit ${dot.dur} linear infinite ${dot.dir}`,
+              animationDelay: dot.delay,
+            }}
+          />
+        ))}
+        <div className="relative z-10 w-16 h-16 rounded-2xl bg-white dark:bg-gray-900 border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center shadow-sm">
+          <MessagesSquare className="h-7 w-7 text-gray-400 dark:text-gray-500" />
+          <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-md">
+            <Sparkles className="h-3 w-3 text-primary-foreground" />
+          </div>
+        </div>
+      </div>
+      <h3 className="text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
+        Нет ни одного чата
+      </h3>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 leading-relaxed">
+        Задайте вопрос об условиях поступления,
+        <br />
+        экзаменах или студенческой жизни
+      </p>
+      <Button
+        size="sm"
+        onClick={onNewChat}
+        disabled={isCreating}
+        className="gap-2"
+      >
+        {isCreating ? (
+          <>
+            <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+            Создание...
+          </>
+        ) : (
+          <>
+            <Plus className="h-3.5 w-3.5" />
+            Начать первый чат
+          </>
+        )}
+      </Button>
+    </div>
+  </div>
+);
+
+// ── Main page ────────────────────────────────────────────────────────────────
 export const ChatsPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -24,9 +187,6 @@ export const ChatsPage = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [deletingId, setDeletingId] = useState(null);
-  const [editingId, setEditingId] = useState(null);
-  const [editingTitle, setEditingTitle] = useState("");
-  const [isUpdating, setIsUpdating] = useState(false);
 
   const loadSessions = async () => {
     setIsLoading(true);
@@ -62,14 +222,8 @@ export const ChatsPage = () => {
     }
   };
 
-  const handleDeleteChat = async (e, sessionId) => {
-    e.stopPropagation();
-    if (
-      !window.confirm(
-        "Are you sure you want to delete this chat? This action cannot be undone.",
-      )
-    )
-      return;
+  const handleDelete = async (sessionId) => {
+    if (!window.confirm("Вы уверены? Это действие нельзя отменить.")) return;
     setDeletingId(sessionId);
     try {
       await chatService.deleteSession(sessionId);
@@ -81,65 +235,11 @@ export const ChatsPage = () => {
     }
   };
 
-  const handleStartEdit = (e, session) => {
-    e.stopPropagation();
-    setEditingId(session.id);
-    setEditingTitle(session.title);
-  };
-
-  const handleCancelEdit = (e) => {
-    if (e) e.stopPropagation();
-    setEditingId(null);
-    setEditingTitle("");
-  };
-
-  const handleSaveEdit = async (e, sessionId) => {
-    e.stopPropagation();
-    if (!editingTitle.trim()) {
-      handleCancelEdit(e);
-      return;
-    }
-
-    setIsUpdating(true);
-    try {
-      await chatService.updateSessionTitle(sessionId, editingTitle.trim());
-      setSessions((prev) =>
-        prev.map((s) =>
-          s.id === sessionId ? { ...s, title: editingTitle.trim() } : s,
-        ),
-      );
-      setEditingId(null);
-      setEditingTitle("");
-    } catch (error) {
-      console.error("Failed to update chat title:", error);
-      alert("Failed to update chat title. Please try again.");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleKeyDown = (e, sessionId) => {
-    if (e.key === "Enter") {
-      handleSaveEdit(e, sessionId);
-    } else if (e.key === "Escape") {
-      handleCancelEdit(e);
-    }
-  };
-
-  const handleOpenChat = (sessionId) => navigate(`/rag-chat/${sessionId}`);
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const diffMs = Date.now() - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24)
-      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-    return date.toLocaleDateString();
+  const handleRename = async (sessionId, newTitle) => {
+    await chatService.updateSessionTitle(sessionId, newTitle);
+    setSessions((prev) =>
+      prev.map((s) => (s.id === sessionId ? { ...s, title: newTitle } : s)),
+    );
   };
 
   const filteredSessions = sessions.filter((s) =>
@@ -148,245 +248,139 @@ export const ChatsPage = () => {
 
   if (authLoading) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Loading...</p>
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Загрузка...
+          </p>
         </div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="text-center">
-          <Bot className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-          <p className="text-gray-500">Please login to continue</p>
-        </div>
-      </div>
-    );
-  }
+  if (!isAuthenticated) return <UnauthenticatedState />;
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+    <div className="w-full min-h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-950">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                Мои чаты
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Просматривайте и продолжайте ваши чаты или начните новый
-              </p>
-            </div>
-            <button
-              onClick={handleNewChat}
-              disabled={isCreating}
-              className="px-5 py-2.5 bg-gray-900 outline-2 text-white rounded-xl font-medium transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 animate-pulse-slow"
-            >
-              {isCreating ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Creating...</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4" />
-                  <span>Новый чат</span>
-                </>
-              )}
-            </button>
-          </div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+            Мои чаты
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Продолжайте прошлые беседы или начните новую
+          </p>
         </div>
 
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        {/* Toolbar */}
+        <div className="mb-6 flex items-center gap-2">
+          <div className="flex items-center gap-1.5 px-3 h-9 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-sm flex-shrink-0 select-none">
+            <span className="font-semibold text-gray-700 dark:text-gray-300">
+              {sessions.length}
+            </span>
+            <span className="hidden sm:inline text-gray-500 dark:text-gray-400">
+              чатов
+            </span>
+          </div>
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search chats..."
+              placeholder="Поиск чатов..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              className="w-full h-9 pl-9 pr-8 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
-                <X className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                <X className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
+          <Button
+            onClick={handleNewChat}
+            disabled={isCreating}
+            size="sm"
+            className="gap-2 flex-shrink-0 h-9"
+          >
+            {isCreating ? (
+              <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Plus className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">
+              {isCreating ? "Создание..." : "Новый чат"}
+            </span>
+          </Button>
         </div>
 
-        {/* List */}
+        {/* Content */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-gray-500">Loading chats...</p>
+          <div className="flex items-center justify-center py-24">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-7 h-7 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Загрузка чатов...
+              </p>
             </div>
           </div>
         ) : filteredSessions.length === 0 ? (
-          <div className="text-center py-20 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
-            {searchQuery ? (
-              <>
-                <Search className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">
-                  No chats found for "{searchQuery}"
+          searchQuery ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-full max-w-xs text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="p-3 rounded-xl bg-gray-100 dark:bg-gray-800 inline-flex">
+                    <Search className="h-6 w-6 text-gray-400" />
+                  </div>
+                </div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Ничего не найдено
                 </p>
-                <button
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                  Нет чатов с названием «{searchQuery}»
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setSearchQuery("")}
-                  className="mt-4 text-primary hover:underline"
+                  className="gap-1.5"
                 >
-                  Clear search
-                </button>
-              </>
-            ) : (
-              <>
-                <Bot className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-500 dark:text-gray-400 mb-2">
-                  No conversations yet
-                </p>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
-                  Start your first conversation
-                </p>
-                <button
-                  onClick={handleNewChat}
-                  className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors inline-flex items-center gap-2"
-                >
-                  <Plus className="h-4 w-4" /> New Chat
-                </button>
-              </>
-            )}
-          </div>
+                  <X className="h-3.5 w-3.5" />
+                  Сбросить поиск
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <EmptyChatsState
+              onNewChat={handleNewChat}
+              isCreating={isCreating}
+            />
+          )
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredSessions.map((session) => (
-              <div
+              <ChatCard
                 key={session.id}
-                onClick={() =>
-                  editingId !== session.id && handleOpenChat(session.id)
-                }
-                className={`group bg-white dark:bg-gray-900 rounded-xl border transition-all duration-200 cursor-pointer overflow-hidden border-gray-200 dark:border-gray-800 hover:border-primary/50 hover:shadow-lg`}
-              >
-                <div className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5">
-                      <MessageSquare className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {editingId !== session.id && (
-                        <button
-                          onClick={(e) => handleStartEdit(e, session)}
-                          className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-lg transition-all duration-200"
-                          title="Edit chat name"
-                        >
-                          <Edit2 className="h-4 w-4 text-blue-500" />
-                        </button>
-                      )}
-                      <button
-                        onClick={(e) => handleDeleteChat(e, session.id)}
-                        disabled={deletingId === session.id}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-all duration-200 disabled:opacity-50"
-                      >
-                        {deletingId === session.id ? (
-                          <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Title with editing capability */}
-                  {editingId === session.id ? (
-                    <div className="mb-2" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
-                          onKeyDown={(e) => handleKeyDown(e, session.id)}
-                          className="flex-1 px-2 py-1 text-lg font-semibold bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                          autoFocus
-                          disabled={isUpdating}
-                        />
-                        <button
-                          onClick={(e) => handleSaveEdit(e, session.id)}
-                          disabled={isUpdating}
-                          className="p-1.5  bg-gray-500 hover:bg-gray-600  text-white rounded-lg transition-colors disabled:opacity-50"
-                          title="Save"
-                        >
-                          {isUpdating ? (
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <Check className="h-4 w-4" />
-                          )}
-                        </button>
-                        <button
-                          onClick={handleCancelEdit}
-                          disabled={isUpdating}
-                          className="p-1.5 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors disabled:opacity-50"
-                          title="Cancel"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 line-clamp-2 text-lg">
-                      {session.title}
-                    </h3>
-                  )}
-
-                  <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-3">
-                    <div className="flex items-center gap-1.5">
-                      <MessageSquare className="h-3.5 w-3.5" />
-                      <span>{session.messageCount ?? 0} сообщений</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>{formatDate(session.updatedAt)}</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-400">
-                      <Calendar className="h-3 w-3" />
-                      <span>
-                        Создан:{" "}
-                        {new Date(session.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="h-1 bg-gradient-to-r from-primary/0 via-primary/50 to-primary/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </div>
+                session={session}
+                onDelete={handleDelete}
+                onRename={handleRename}
+                isDeleting={deletingId === session.id}
+              />
             ))}
-          </div>
-        )}
-
-        {!isLoading && sessions.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-              Всего: {sessions.length}
-            </p>
           </div>
         )}
       </div>
 
       {isCreating && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 flex items-center gap-3 shadow-2xl">
-            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            <span className="text-gray-700 dark:text-gray-300">
-              Creating new chat...
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 px-5 py-4 flex items-center gap-3 shadow-xl">
+            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              Создание чата...
             </span>
           </div>
         </div>

@@ -6,6 +6,8 @@ import { Chat } from "./components/ui/chat/chat";
 import RAGChat from "./components/ui/rag-chat/RAGChat";
 import { ChatsPage } from "./components/ui/rag-chat/ChatsPage";
 import { ProfilePage } from "./components/ui/profile/profile";
+import { NotFound } from "./components/ui/NotFound";
+import { ErrorPage } from "./components/ui/ErrorPage";
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
           <Route path="/rag-chat/:sessionId" element={<RAGChat />} />
           <Route path="/rag-chat" element={<RAGChat />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/error" element={<ErrorPage />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </BrowserRouter>

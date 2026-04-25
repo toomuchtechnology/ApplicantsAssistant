@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Bot, Sparkles, ChevronUp, ChevronDown } from "lucide-react";
 import { StoryCard } from "./StoryCard";
-import { SimpleMarkdownContent } from "../fixed-markdown-content";
+import { SimpleMarkdownContent } from "../markdown/SimpleMarkdownContent";
 
 export const FinalMessage = ({ message }) => {
   const [expanded, setExpanded] = useState(true);

@@ -2,7 +2,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Bot, Search, X, Sparkles, MessagesSquare } from "lucide-react";
-import { useAuth, AuthComponent } from "../auth-component";
+import { useAuth } from "../../hooks/useAuth";
+import { AuthComponent } from "../auth";
+
 import { chatService } from "./chatService";
 import { Button } from "@/components/ui/button";
 import { ChatCard } from "./ChatCard";

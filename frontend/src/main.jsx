@@ -4,6 +4,10 @@ import App from "./App.jsx";
 import "./index.css";
 import { ThemeProvider } from "./components/providers/theme-provider.jsx";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { installFetchInterceptor } from "./api/authFetch";
+
+// Патчим window.fetch до рендера — иначе первые запросы уйдут без токена
+installFetchInterceptor();
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_APP_GOOGLE_CLIENT_ID;
 
